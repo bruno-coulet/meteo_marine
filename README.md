@@ -121,7 +121,7 @@ Optionnelles:
 
 1. **Collecte** → `uv run python main.py`
    - Récupère données mensuelles via API
-   - Crée `data/raw/YYYY_MM/meteo_*.csv`
+   - Crée `data/raw/YYYY/meteo_*.csv` (par année)
 
 2. **Consolidation** → `uv run python consolidate_data.py`
    - Fusionne tous les CSV mensuels
@@ -154,7 +154,9 @@ docker compose run --rm collect-data
 
 - [README_ML.md](README_ML.md) - Utilisation en Machine Learning
 - [DOCKER.md](DOCKER.md) - Guide Docker complet
+- [DOCKER_EXPLIQUE.md](DOCKER_EXPLIQUE.md) - Docker détaillé (architecture, troubleshooting)
 - [STRUCTURE.md](STRUCTURE.md) - Organisation du projet
+- [UTILS_EXPLIQUE.md](UTILS_EXPLIQUE.md) - Architecture utils.py (APIs, flux, fonctions)
 
 ## 🔍 Performance
 

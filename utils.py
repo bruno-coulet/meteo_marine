@@ -1,5 +1,49 @@
 """
-Utilitaires pour la collecte et traitement des données météo marine
+Utilitaires pour la collecte et traitement des données météo marine de Marseille
+
+=== ARCHITECTURE ===
+
+Ce module collecte les données quotidiennes de météo marine via des APIs publiques.
+
+Sources de données:
+1. Open-Meteo Marine API (UTILISÉ ✅)
+   - Vagues: hauteur, direction, période
+   - Houle vs vagues de vent
+   - URL: https://marine-api.open-meteo.com/v1/marine
+   - Avantages: Gratuit, pas d'auth, fiable
+
+2. Open-Meteo ERA5 Archive (UTILISÉ ✅)
+   - Température, vent, pression, humidité
+   - Données de réanalyse (historique fiable)
+   - URL: https://archive-api.open-meteo.com/v1/era5
+   - Avantages: Gratuit, pas d'auth, complet
+
+3. Météo-France API (NON UTILISÉ ❌)
+   - Bulletins BMS (Bulletins Météo Marine)
+   - Payant, authentification requise
+   - Endpoints: Non documentés/instables
+   - Status: Code legacy conservé pour référence
+
+=== FLUX DE DONNÉES ===
+
+1. collect_historical_data_batch()
+   ├─ get_marine_weather_open_meteo() → Vagues
+   └─ get_weather_data_open_meteo() → Météo générale
+
+2. process_to_daily_summary()
+   └─ Fusionne marine_data + weather_data
+
+3. save_data()
+   └─ Exporte en CSV (optionnellement JSON)
+
+=== UTILISATION ===
+
+from utils import MeteoMarineMarseille
+
+client = MeteoMarineMarseille()
+data = client.collect_historical_data_batch(start_date, end_date)
+daily_df = client.process_to_daily_summary(data)
+client.save_data(daily_df, start_date, end_date, save_json=False)
 """
 
 import requests
@@ -15,24 +59,24 @@ class MeteoMarineMarseille:
 
     def __init__(self, api_key=None):
         self.api_key = api_key
-        self.meteofrance_base = "https://portail-api.meteofrance.fr"
         self.open_meteo_base = "https://marine-api.open-meteo.com/v1"
-
-        # Headers pour Météo-France API
-        self.headers = {}
-        if api_key:
-            self.headers = {
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-            }
 
         # Coordonnées de Marseille
         self.marseille_coords = {"lat": 43.2965, "lon": 5.3698}
 
+    # =====================================================================
+    # OPEN-METEO MARINE API (Vagues, houle) - UTILISÉ ✅
+    # =====================================================================
+
     def get_marine_weather_open_meteo(self, start_date, end_date):
         """
-        Récupère les données météo marine via Open-Meteo (gratuit, pas de clé requise)
-        Inclut les données historiques et les vagues
+        [OPEN-METEO MARINE] Récupère les données de vagues
+        ✅ UTILISÉ dans: collect_historical_data_batch()
+
+        Données retournées:
+        - Hauteur, direction, période des vagues
+        - Houle (swell) vs vagues de vent
+        - Formats: horaire + résumé quotidien
         """
         url = f"{self.open_meteo_base}/marine"
 
@@ -70,9 +114,20 @@ class MeteoMarineMarseille:
             print(f"Erreur Open-Meteo marine: {e}")
             return None
 
+    # =====================================================================
+    # OPEN-METEO ERA5 API (Météo générale) - UTILISÉ ✅
+    # =====================================================================
+
     def get_weather_data_open_meteo(self, start_date, end_date):
         """
-        Récupère les données météo générales (vent, etc.) via Open-Meteo
+        [OPEN-METEO ERA5] Récupère les données de météo générale
+        ✅ UTILISÉ dans: collect_historical_data_batch()
+
+        Données retournées:
+        - Température (min/max)
+        - Vent (vitesse, direction, rafales)
+        - Pression, humidité, couverture nuageuse
+        - Source: Données de réanalyse (fiables et historiques)
         """
         url = "https://archive-api.open-meteo.com/v1/era5"
 
@@ -109,9 +164,22 @@ class MeteoMarineMarseille:
             print(f"Erreur Open-Meteo weather: {e}")
             return None
 
+    # =====================================================================
+    # ORCHESTRATION & TRAITEMENT (Fusion des données)
+    # =====================================================================
+
     def collect_historical_data_batch(self, start_date, end_date, batch_days=30):
         """
-        Collecte les données par lots pour éviter les timeouts
+        Collecte les données par lots via les 2 APIs Open-Meteo
+        ✅ UTILISÉ dans: main.py
+
+        Processus:
+        1. Appelle get_marine_weather_open_meteo() → données de vagues
+        2. Appelle get_weather_data_open_meteo() → données météo générale
+        3. Regroupe par lots de 30 jours (évite timeouts)
+        4. Pause 2 sec entre les lots (respecte les limites API)
+
+        Retour: Liste de dictionnaires avec {"marine_data", "weather_data"}
         """
         all_data = []
         current_start = start_date
@@ -150,7 +218,14 @@ class MeteoMarineMarseille:
 
     def process_to_daily_summary(self, batch_data_list):
         """
-        Convertit les données par lots en résumé quotidien
+        Fusionne et traite les données en résumé quotidien
+        ✅ UTILISÉ dans: main.py
+
+        Processus:
+        1. Extrait données quotidiennes marines et météo
+        2. Fusionne par date (inner join sur la date)
+        3. Gère les valeurs manquantes (None)
+        4. Retourne DataFrame pandas prêt pour sauvegarde/ML
         """
         daily_records = []
 
@@ -256,7 +331,23 @@ class MeteoMarineMarseille:
 
         return pd.DataFrame(daily_records)
 
+    # =====================================================================
+    # SAUVEGARDE
+    # =====================================================================
+
     def save_data(self, data, start_date, end_date, save_json=False):
+        """
+        Sauvegarde les données traitées
+        ✅ UTILISÉ dans: main.py
+
+        Format de sortie:
+        - CSV: data/raw/YYYY/meteo_YYYY_MM_DD-DD.csv (rapide, compacte)
+        - JSON: optionnel, données brutes (lourd, legacy)
+
+        Structures:
+        - Dossier par année (facilite l'archivage)
+        - Nom du fichier inclut la plage de dates
+        - Index: réinitialisé (facilite export)
         """
         Sauvegarde les données organisées par année
         Format: data/raw/YYYY/meteo_YYYY_MM_DD-DD.csv
