@@ -13,7 +13,10 @@
 ├── Makefile              # Commandes utiles
 ├── .gitignore            # Fichiers à ignorer
 └── data/
-    ├── raw/              # Données brutes (par mois)
+    ├── raw/              # Données brutes (organisées par année)
+    │   ├── 2024/         # Fichiers CSV de 2024
+    │   ├── 2025/         # Fichiers CSV de 2025
+    │   └── 2026/         # Fichiers CSV de 2026
     └── processed/        # Données consolidées pour ML
 ```
 

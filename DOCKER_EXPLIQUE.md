@@ -1,19 +1,12 @@
 # Docker - Guide Complet
 
-## 📋 Vue d'ensemble
 
-Ce projet utilise Docker pour:
-- **Reproductibilité** - Mêmes résultats sur toutes les machines
-- **Isolation** - Dépendances isolées, pas de conflits
-- **Production** - Déploiement facile
-- **CI/CD** - Tests automatisés
-
-## 🏗️ Architecture Docker
+## Architecture Docker
 
 ### Fichiers Docker
 
 ```
-Dockerfile              # Image de base (Python 3.11)
+Dockerfile             # Image de base (Python 3.11)
 docker-compose.yml     # Orchestration multi-services
 .dockerignore          # Fichiers à exclure
 ```

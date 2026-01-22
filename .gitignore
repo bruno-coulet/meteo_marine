@@ -44,8 +44,7 @@ pip-log.txt
 *.ipynb
 
 # Data (keep structure only)
-data/raw/*
-data/processed/*
+data/*
 !data/raw/.gitkeep
 !data/processed/.gitkeep
 

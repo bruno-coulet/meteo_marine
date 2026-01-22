@@ -4,13 +4,15 @@
 
 ```
 data/
-├── raw/                          # Données brutes organisées par mois
-│   ├── 2025_01/
+├── raw/                          # Données brutes organisées par année
+│   ├── 2024/
+│   │   └── meteo_2024_12_01-31.csv
+│   ├── 2025/
 │   │   ├── meteo_2025_01_01-31.csv
-│   │   └── meteo_2025_01_01-31.json
-│   ├── 2025_02/
-│   │   └── meteo_2025_02_01-28.csv
-│   └── ...
+│   │   ├── meteo_2025_02_01-28.csv
+│   │   └── meteo_2025_11_01-30.csv
+│   └── 2026/
+│       └── meteo_2026_01_01-22.csv
 └── processed/                    # Données consolidées pour ML
     ├── marseille_marine_consolidated.csv    # Toutes les données fusionnées
     ├── train.csv                 # 70% des données

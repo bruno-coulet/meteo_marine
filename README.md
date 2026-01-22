@@ -69,10 +69,13 @@ SAVE_JSON = False          # True = sauvegarde aussi .json
 
 ```
 data/
-├── raw/                    # Données brutes (par mois)
-│   ├── 2025_11/
-│   │   └── meteo_2025_11_01-30.csv   (5-10 KB, rapide)
-│   └── ...
+├── raw/                    # Données brutes (par année)
+│   ├── 2025/
+│   │   ├── meteo_2025_01_01-31.csv
+│   │   ├── meteo_2025_02_01-28.csv
+│   │   └── meteo_2025_11_01-30.csv   (5-10 KB par mois, rapide)
+│   └── 2024/
+│       └── meteo_2024_12_01-31.csv
 └── processed/              # Données ML prêtes
     ├── marseille_marine_consolidated.csv
     ├── train.csv           # 70%

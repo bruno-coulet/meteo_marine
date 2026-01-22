@@ -14,8 +14,8 @@ from utils import MeteoMarineMarseille
 # CONFIGURATION - Modifier ces constantes pour personnaliser les requêtes
 # ============================================================================
 # Format: "YYYY-MM-DD" ou None pour utiliser les valeurs par défaut
-START_DATE = "2025-11-01"  # None = il y a 730 jours; exemple: "2024-01-22"
-END_DATE = "2025-11-30"    # None = aujourd'hui; exemple: "2026-01-22"
+START_DATE = "2025-09-01"  # None = il y a 730 jours; exemple: "2024-01-22"
+END_DATE = "2025-09-30"    # None = aujourd'hui; exemple: "2026-01-22"
 
 # Format de sauvegarde des données
 # CSV (recommandé pour ML):

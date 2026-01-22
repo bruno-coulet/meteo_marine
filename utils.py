@@ -258,16 +258,16 @@ class MeteoMarineMarseille:
 
     def save_data(self, data, start_date, end_date, save_json=False):
         """
-        Sauvegarde les données organisées par mois
-        Format: data/raw/YYYY_MM/meteo_YYYY_MM_DD-DD.csv
+        Sauvegarde les données organisées par année
+        Format: data/raw/YYYY/meteo_YYYY_MM_DD-DD.csv
         """
-        # Création du dossier de sortie structuré par mois
-        start_month = start_date.strftime("%Y_%m")
+        # Création du dossier de sortie structuré par année
+        year = start_date.strftime("%Y")
 
-        output_dir = Path("data/raw") / start_month
+        output_dir = Path("data/raw") / year
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        # Nom du fichier: meteo_2025_01_01-31.csv
+        # Nom du fichier: meteo_2025_11_01-30.csv
         filename = f"meteo_{start_date.strftime('%Y_%m_%d')}-{end_date.strftime('%d')}.csv"
         csv_file = output_dir / filename
 
