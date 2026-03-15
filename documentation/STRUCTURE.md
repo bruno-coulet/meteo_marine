@@ -4,9 +4,11 @@
 
 ```
 .
-├── main.py                 # Point d'entrée principal
-├── utils.py               # Classe MeteoMarineMarseille et fonctions utilitaires
-├── consolidate_data.py    # Consolidation et splits ML
+├── main.py                 # Pipeline complet (collecte + consolidation + split)
+├── src/collect.py          # Collecte des données Open-Meteo
+├── src/consolidate.py      # Consolidation des fichiers mensuels
+├── src/split.py            # Création des splits train/val/test
+├── src/utils.py            # Classe MeteoMarineMarseille et fonctions utilitaires
 ├── pyproject.toml         # Dépendances (uv)
 ├── Dockerfile             # Image Docker
 ├── docker-compose.yml     # Orchestration
@@ -23,11 +25,16 @@
 ## Fichiers principaux
 
 ### `main.py`
-- **Point d'entrée** pour la collecte de données
-- Constantes: `START_DATE`, `END_DATE`
+- **Orchestration du pipeline complet**
+- Appelle `src/collect.py`, `src/consolidate.py`, puis `src/split.py`
 - Exécution: `python main.py` ou `uv run main.py`
 
-### `utils.py`
+### `src/collect.py`
+- **Point d'entrée de la collecte** des données Open-Meteo
+- Constantes: `START_DATE`, `END_DATE`
+- Exécution: `python src/collect.py` ou `uv run python src/collect.py`
+
+### `src/utils.py`
 - **Classe `MeteoMarineMarseille`** avec méthodes:
   - `get_marine_weather_open_meteo()` - Vagues
   - `get_weather_data_open_meteo()` - Météo générale
@@ -35,10 +42,15 @@
   - `process_to_daily_summary()` - Traitement quotidien
   - `save_data()` - Sauvegarde organisée
 
-### `consolidate_data.py`
+### `src/consolidate.py`
 - Étape 2: Fusion des données mensuelles
-- Création des splits train/val/test
-- Exécution: `python consolidate_data.py` ou `uv run consolidate_data.py`
+- Génère `data/processed/consolidated_YYYY_MM_DD-au-MM_DD.parquet`
+- Exécution: `python src/consolidate.py` ou `uv run python src/consolidate.py`
+
+### `src/split.py`
+- Étape 3: Création des splits train/val/test
+- Lit le dernier fichier consolidé dans `data/processed/`
+- Exécution: `python src/split.py` ou `uv run python src/split.py`
 
 ## Workflow de développement
 
@@ -49,10 +61,16 @@
 uv sync
 
 # Collecte données
-uv run python main.py
+uv run python src/collect.py
 
 # Consolidation
-uv run python consolidate_data.py
+uv run python src/consolidate.py
+
+# Split ML
+uv run python src/split.py
+
+# Pipeline complet
+uv run python main.py
 ```
 
 ### Avec Make
@@ -74,17 +92,19 @@ docker compose run --rm consolidate-data
 ## Avantages de cette structure
 
 ✅ **Séparation des responsabilités**
-- `main.py` : orchestration et configuration
-- `utils.py` : logique métier
-- `consolidate_data.py` : post-traitement
+- `main.py` : orchestration du pipeline
+- `src/collect.py` : collecte Open-Meteo
+- `src/consolidate.py` : consolidation
+- `src/split.py` : split ML
+- `src/utils.py` : logique métier
 
 ✅ **Facilité de test**
 - Les fonctions sont isolées dans `utils.py`
 - Facile à mocker et tester
 
 ✅ **Réutilisabilité**
-- `utils.MeteoMarineMarseille` peut être importée ailleurs
-- `consolidate_data.py` indépendant
+- `src.utils.MeteoMarineMarseille` peut être importée ailleurs
+- `src/consolidate.py` et `src/split.py` exécutables séparément
 
 ✅ **Maintenabilité**
 - Code lisible et organisé
@@ -94,9 +114,9 @@ docker compose run --rm consolidate-data
 
 ```python
 # Dans main.py ou tout autre fichier
-from utils import MeteoMarineMarseille
+from src.utils import MeteoMarineMarseille
 
 # Utilisation
-client = MeteoMarineMarseille(api_key)
+client = MeteoMarineMarseille()
 data = client.collect_historical_data_batch(start, end)
 ```

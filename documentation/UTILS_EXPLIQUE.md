@@ -42,7 +42,7 @@ Raison: Payant, authentification requise, endpoints instables
 ## 🔄 Flux de données
 
 ```
-main.py
+collect.py
   │
   ├─ collect_historical_data_batch(start, end)
   │   │
@@ -124,7 +124,7 @@ def process_to_daily_summary(self, batch_data_list):
 
 def save_data(self, data, start_date, end_date, save_json=False):
     """Sortie: exporte en CSV/JSON"""
-    # Écrit: data/raw/YYYY/meteo_*.csv
+    # Écrit: data/raw/YYYY/meteo_YYYY_MM_DD-au-MM_DD.csv
 ```
 
 ---

@@ -1,6 +1,5 @@
 # Docker - Guide Complet
 
-
 ## Architecture Docker
 
 ### Fichiers Docker
@@ -88,12 +87,16 @@ docker run --rm \
 ```yaml
 services:
   collect-data:
-    # Exécute requete_ok.py
+    # Exécute collect.py
     # Profil: docker compose run --rm collect-data
     
   consolidate-data:
-    # Exécute consolidate_data.py
+    # Exécute consolidate.py
     # Profil: docker compose run --rm consolidate-data
+
+  split-data:
+    # Exécute split.py
+    # Profil: docker compose run --rm split-data
     
   jupyter:
     # Serveur Jupyter (port 8888)
@@ -111,6 +114,9 @@ docker compose run --rm collect-data
 
 # Consolider les données
 docker compose run --rm consolidate-data
+
+# Créer les splits ML
+docker compose run --rm split-data
 
 # Lancer Jupyter
 docker compose run --rm jupyter
@@ -158,17 +164,25 @@ docker compose run --rm collect-data
 docker compose run --rm consolidate-data
 ```
 
-**Fichiers générés**:
-- `data/processed/marseille_marine_consolidated.csv`
-- `data/processed/train.csv`
-- `data/processed/val.csv`
-- `data/processed/test.csv`
+**Fichier généré**:
+- `data/processed/consolidated_YYYY_MM_DD-au-MM_DD.parquet`
 
-### 4. ML (local ou Docker)
+### 4. Split ML
+
+```bash
+docker compose run --rm split-data
+```
+
+**Fichiers générés**:
+- `data/processed/train.parquet`
+- `data/processed/val.parquet`
+- `data/processed/test.parquet`
+
+### 5. ML (local ou Docker)
 
 ```bash
 # Local
-python notebook_exploration.ipynb
+jupyter lab
 
 # Ou Docker + Jupyter
 docker compose run --rm jupyter
@@ -182,6 +196,7 @@ docker compose run --rm jupyter
 | Build (avec cache) | <5 sec | ✓ |
 | Run collect | 2-3 min | - |
 | Run consolidate | 5-10 sec | - |
+| Run split | <5 sec | - |
 | Run jupyter | <1 sec | - |
 
 ## 🐛 Troubleshooting Docker

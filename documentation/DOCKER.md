@@ -14,6 +14,12 @@ sudo apt-get install docker.io docker-compose
 sudo usermod -aG docker $USER
 ```
 
+### Windows
+```powershell
+winget install -e --id Docker.DockerDesktop
+# Puis lancer Docker Desktop depuis le menu Démarrer
+```
+
 ---
 
 ## Workflow Docker
@@ -40,6 +46,11 @@ docker run --rm -v $(PWD)/data:/app/data meteo-marine:latest
 make docker-run
 ```
 
+Sur Windows PowerShell:
+```powershell
+docker run --rm -v "${PWD}/data:/app/data" meteo-marine:latest
+```
+
 Les données seront sauvegardées dans `./data/raw/` de votre machine.
 
 ### 3. Avec docker-compose (recommandé)
@@ -61,7 +72,14 @@ environment:
 docker compose run --rm consolidate-data
 ```
 
-Génère les fichiers ML dans `data/processed/`.
+Génère le fichier consolidé dans `data/processed/`.
+
+#### Créer les splits ML
+```bash
+docker compose run --rm split-data
+```
+
+Génère `train.parquet`, `val.parquet` et `test.parquet` dans `data/processed/`.
 
 #### Lancer Jupyter pour l'exploration
 ```bash
@@ -85,6 +103,11 @@ Puis ouvrez: `http://localhost:8888`
 **Important:** Le dossier `./data` doit exister avant le premier lancement:
 ```bash
 mkdir -p data/raw data/processed
+```
+
+Sur Windows PowerShell:
+```powershell
+New-Item -ItemType Directory -Force data/raw, data/processed
 ```
 
 ---
@@ -122,6 +145,11 @@ open /Applications/Docker.app
 sudo systemctl start docker
 ```
 
+Sur Windows PowerShell:
+```powershell
+Start-Process "C:\Program Files\Docker\Docker\Docker Desktop.exe"
+```
+
 ### Erreur: "Permission denied"
 ```bash
 # Ajouter votre user au groupe docker
@@ -134,6 +162,11 @@ newgrp docker
 Vérifiez que le chemin du volume est correct:
 ```bash
 docker run -v $(pwd)/data:/app/data meteo-marine:latest
+```
+
+Sur Windows PowerShell:
+```powershell
+docker run -v "${PWD}/data:/app/data" meteo-marine:latest
 ```
 
 ### Image trop grande

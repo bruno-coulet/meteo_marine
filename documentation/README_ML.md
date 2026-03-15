@@ -4,20 +4,20 @@
 
 ```
 data/
-├── raw/                          # Données brutes organisées par année
+├── raw/    # Données brutes organisées en fichiers mensuels par année
 │   ├── 2024/
-│   │   └── meteo_2024_12_01-31.csv
+│   │   └── meteo_2024_12_01-au-12_31.csv
 │   ├── 2025/
-│   │   ├── meteo_2025_01_01-31.csv
-│   │   ├── meteo_2025_02_01-28.csv
-│   │   └── meteo_2025_11_01-30.csv
+│   │   ├── meteo_2025_01_01-au-01_31.csv
+│   │   ├── meteo_2025_02_01-au-02_28.csv
+│   │   └── meteo_2025_11_01-au-11_30.csv
 │   └── 2026/
-│       └── meteo_2026_01_01-22.csv
+│       └── meteo_2026_01_01-au-01_22.csv
 └── processed/                    # Données consolidées pour ML
-    ├── marseille_marine_consolidated.csv    # Toutes les données fusionnées
-    ├── train.csv                 # 70% des données
-    ├── val.csv                   # 15% des données
-    └── test.csv                  # 15% des données
+    ├── consolidated_2025_09_01-au-02_28.parquet
+    ├── train.parquet             # 70% des données
+    ├── val.parquet               # 15% des données
+    └── test.parquet              # 15% des données
 ```
 
 ## Workflow complet
@@ -25,7 +25,7 @@ data/
 ### Étape 1: Récupérer les données brutes
 
 ```bash
-python requete_ok.py
+uv run python src/collect.py
 ```
 
 **Options de personnalisation** (en début du script):
@@ -35,20 +35,28 @@ END_DATE = None        # None = aujourd'hui, ou "2026-01-22"
 ```
 
 **Résultat:**
-- Crée des fichiers CSV mensuels: `data/raw/YYYY_MM/meteo_YYYY_MM_DD-DD.csv`
+- Crée des fichiers CSV mensuels: `data/raw/YYYY/meteo_YYYY_MM_DD-au-MM_DD.csv`
 - Chaque fichier contient les données quotidiennes de vagues, vent, température, etc.
 
-### Étape 2: Consolider et créer les splits
+### Étape 2: Consolider
 
 ```bash
-python consolidate_data.py
+uv run python src/consolidate.py
 ```
 
 **Résultat:**
-- `data/processed/marseille_marine_consolidated.csv` → toutes les données fusionnées
-- `data/processed/train.csv` → 70% des données (entraînement)
-- `data/processed/val.csv` → 15% des données (validation)
-- `data/processed/test.csv` → 15% des données (test)
+- `data/processed/consolidated_YYYY_MM_DD-au-MM_DD.parquet` → toutes les données fusionnées
+
+### Étape 3: Créer les splits
+
+```bash
+uv run python src/split.py
+```
+
+**Résultat:**
+- `data/processed/train.parquet` → 70% des données (entraînement)
+- `data/processed/val.parquet` → 15% des données (validation)
+- `data/processed/test.parquet` → 15% des données (test)
 
 ## Données disponibles
 
@@ -79,9 +87,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
 # Charger les données
-train_df = pd.read_csv('data/processed/train.csv')
-val_df = pd.read_csv('data/processed/val.csv')
-test_df = pd.read_csv('data/processed/test.csv')
+train_df = pd.read_parquet('data/processed/train.parquet')
+val_df = pd.read_parquet('data/processed/val.parquet')
+test_df = pd.read_parquet('data/processed/test.parquet')
 
 # Préparation des features et cible
 X_train = train_df.drop('date', axis=1)
@@ -100,6 +108,6 @@ X_test = scaler.transform(X_test)
 ## Notes importantes
 
 ✅ Les données sont **temporellement ordonnées** → pas de mélange train/test aléatoire naïf  
-✅ Format CSV simple → compatible avec tous les frameworks (sklearn, PyTorch, TensorFlow)  
+✅ Format Parquet typé → plus compact et plus robuste pour le pipeline ML  
 ✅ Données historiques fiables → source Open-Meteo (réanalyse ERA5)  
 ✅ Structure modulaire → facile de rajouter de nouvelles périodes

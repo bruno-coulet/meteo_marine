@@ -12,6 +12,9 @@ services:
     environment:
       START_DATE: "2025-12-01"
       END_DATE: "2025-12-31"
+    working_dir: /app
+    entrypoint: python
+    command: src/collect.py
     profiles:
       - collect
 
@@ -25,11 +28,27 @@ services:
       - ./data:/app/data
     working_dir: /app
     entrypoint: python
-    command: consolidate_data.py
+    command: src/consolidate.py
     profiles:
       - consolidate
     depends_on:
       - collect-data
+
+  # Crée les splits train/val/test
+  split-data:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: meteo-marine-split
+    volumes:
+      - ./data:/app/data
+    working_dir: /app
+    entrypoint: python
+    command: src/split.py
+    profiles:
+      - split
+    depends_on:
+      - consolidate-data
 
   # Service ML (Jupyter pour exploration)
   jupyter:

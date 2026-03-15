@@ -38,7 +38,7 @@ Sources de données:
 
 === UTILISATION ===
 
-from utils import MeteoMarineMarseille
+from src.utils import MeteoMarineMarseille
 
 client = MeteoMarineMarseille()
 data = client.collect_historical_data_batch(start_date, end_date)
@@ -57,8 +57,7 @@ from pathlib import Path
 class MeteoMarineMarseille:
     """Client pour récupérer les données de météo marine de Marseille"""
 
-    def __init__(self, api_key=None):
-        self.api_key = api_key
+    def __init__(self):
         self.open_meteo_base = "https://marine-api.open-meteo.com/v1"
 
         # Coordonnées de Marseille
@@ -338,42 +337,60 @@ class MeteoMarineMarseille:
     def save_data(self, data, start_date, end_date, save_json=False):
         """
         Sauvegarde les données traitées
-        ✅ UTILISÉ dans: main.py
+        UTILISÉ dans: main.py
 
         Format de sortie:
-        - CSV: data/raw/YYYY/meteo_YYYY_MM_DD-DD.csv (rapide, compacte)
+        - CSV: data/raw/YYYY/meteo_YYYY_MM_DD-au-MM_DD.csv (rapide, compacte)
         - JSON: optionnel, données brutes (lourd, legacy)
 
         Structures:
-        - Dossier par année (facilite l'archivage)
-        - Nom du fichier inclut la plage de dates
+        - Dossier par année
+        - Un fichier par mois couvert par la période
+        - Nom du fichier inclut la plage effective du mois
         - Index: réinitialisé (facilite export)
+
+        Retour:
+        - csv_files: liste des chemins CSV générés
+        - json_files: liste des chemins JSON générés (ou None si save_json=False)
         """
-        Sauvegarde les données organisées par année
-        Format: data/raw/YYYY/meteo_YYYY_MM_DD-DD.csv
-        """
-        # Création du dossier de sortie structuré par année
-        year = start_date.strftime("%Y")
+        if not isinstance(data, pd.DataFrame) or data.empty:
+            return [], None if not save_json else []
 
-        output_dir = Path("data/raw") / year
-        output_dir.mkdir(parents=True, exist_ok=True)
+        if "date" not in data.columns:
+            raise ValueError("La colonne 'date' est requise pour la sauvegarde mensuelle")
 
-        # Nom du fichier: meteo_2025_11_01-30.csv
-        filename = f"meteo_{start_date.strftime('%Y_%m_%d')}-{end_date.strftime('%d')}.csv"
-        csv_file = output_dir / filename
+        working_df = data.copy()
+        working_df["date"] = pd.to_datetime(working_df["date"], errors="coerce")
+        working_df = working_df.dropna(subset=["date"]).sort_values("date")
 
-        # Sauvegarde CSV
-        if isinstance(data, pd.DataFrame):
-            data.to_csv(csv_file, index=False)
+        csv_files = []
+        json_files = []
+
+        for _, month_df in working_df.groupby(working_df["date"].dt.to_period("M")):
+            month_start = month_df["date"].min()
+            month_end = month_df["date"].max()
+
+            year = month_start.strftime("%Y")
+            output_dir = Path("data/raw") / year
+            output_dir.mkdir(parents=True, exist_ok=True)
+
+            filename = (
+                f"meteo_{month_start.strftime('%Y_%m_%d')}-au-{month_end.strftime('%m_%d')}.csv"
+            )
+            csv_file = output_dir / filename
+
+            month_to_save = month_df.copy()
+            month_to_save["date"] = month_to_save["date"].dt.strftime("%Y-%m-%d")
+            month_to_save.to_csv(csv_file, index=False)
+            csv_files.append(csv_file)
             print(f"✓ CSV sauvegardé: {csv_file}")
 
-        # Sauvegarde JSON optionnelle (données brutes)
-        json_file = None
-        if save_json:
-            json_filename = filename.replace(".csv", ".json")
-            json_file = output_dir / json_filename
-            with open(json_file, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2, ensure_ascii=False, default=str)
-            print(f"✓ JSON sauvegardé: {json_file}")
+            if save_json:
+                json_filename = filename.replace(".csv", ".json")
+                json_file = output_dir / json_filename
+                with open(json_file, "w", encoding="utf-8") as f:
+                    json.dump(month_to_save.to_dict(orient="records"), f, indent=2, ensure_ascii=False)
+                json_files.append(json_file)
+                print(f"✓ JSON sauvegardé: {json_file}")
 
-        return csv_file, json_file
+        return csv_files, (json_files if save_json else None)

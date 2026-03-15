@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Classification ML pour données de météo marine de Marseille"
 readme = "README.md"
 requires-python = ">=3.11"
-license = {text = "MIT"}
+license = "MIT"
 authors = [
     {name = "Bruno Coulet", email = "bruno@example.com"}
 ]
@@ -19,6 +19,11 @@ dependencies = [
     "pandas>=2.0.0",
     "numpy>=1.24.0",
     "scikit-learn>=1.3.0",
+    "fastparquet>=2024.11.0",
+    "ipykernel>=7.1.0",
+    "matplotlib>=3.10.8",
+    "seaborn>=0.13.2",
+    "plotly>=6.6.0",
 ]
 
 [project.optional-dependencies]
@@ -47,6 +52,12 @@ jupyter = [
 Homepage = "https://github.com/brunocoulet/meteo-marine-ml"
 Repository = "https://github.com/brunocoulet/meteo-marine-ml.git"
 Issues = "https://github.com/brunocoulet/meteo-marine-ml/issues"
+
+[tool.setuptools]
+py-modules = ["main"]
+
+[tool.setuptools.packages.find]
+include = ["src*"]
 
 [tool.uv]
 # Pas de configuration spécifique uv ici, utiliser .python-version si nécessaire
